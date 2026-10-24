@@ -1,0 +1,69 @@
+@using AspNetCoreMvc.Models
+@model List<TaskItem>
+@{
+    ViewData["Title"] = "Tasklarım";
+    var columns = new[]
+    {
+        (State: TaskState.Todo, Name: "Todo"),
+        (State: TaskState.InProgress, Name: "In Progress"),
+        (State: TaskState.Done, Name: "Done")
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Salam, @User.Identity?.Name</h2>
+    <form method="post" action="/Account/Logout">
+        <button class="btn btn-outline-secondary btn-sm">Çıxış</button>
+    </form>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form method="post" action="/Tasks/Create" class="row g-2 mb-4">
+    <div class="col-md-4"><input name="title" class="form-control" placeholder="Task başlığı" required maxlength="200" /></div>
+    <div class="col-md-6"><input name="description" class="form-control" placeholder="Təsvir (məcburi deyil)" maxlength="1000" /></div>
+    <div class="col-md-2"><button class="btn btn-success w-100">Əlavə et</button></div>
+</form>
+
+<div class="row">
+    @foreach (var col in columns)
+    {
+        <div class="col-md-4">
+            <h4>@col.Name</h4>
+            @foreach (var t in Model.Where(x => x.Status == col.State))
+            {
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h6 class="card-title">@t.Title</h6>
+                        @if (!string.IsNullOrEmpty(t.Description))
+                        {
+                            <p class="card-text small">@t.Description</p>
+                        }
+
+                        <div class="d-flex gap-1 flex-wrap">
+                            @foreach (var target in columns.Where(c => c.State != t.Status))
+                            {
+                                <form method="post" action="/Tasks/ChangeStatus">
+                                    <input type="hidden" name="id" value="@t.Id" />
+                                    <input type="hidden" name="status" value="@((int)target.State)" />
+                                    <button class="btn btn-outline-primary btn-sm">→ @target.Name</button>
+                                </form>
+                            }
+
+                            @if (t.Status == TaskState.Todo)
+                            {
+                                <form method="post" action="/Tasks/Delete">
+                                    <input type="hidden" name="id" value="@t.Id" />
+                                    <button class="btn btn-outline-danger btn-sm">Sil</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
